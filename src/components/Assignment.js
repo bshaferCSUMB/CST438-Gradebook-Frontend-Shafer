@@ -6,7 +6,9 @@ import Cookies from 'js-cookie';
 import Button from '@mui/material/Button';
 import Radio from '@mui/material/Radio';
 import {DataGrid} from '@mui/x-data-grid';
-import {SERVER_URL} from '../constants.js'
+import {SERVER_URL} from '../constants.js';
+import AddAssignment from './AddAssignment';
+import ButtonGroup from '@mui/material/ButtonGroup';
 
 // NOTE:  for OAuth security, http request must have
 //   credentials: 'include' 
@@ -48,7 +50,37 @@ class Assignment extends React.Component {
     console.log("Assignment.onRadioClick " + event.target.value);
     this.setState({selected: event.target.value});
   }
-  
+
+  // Adds an assignment passing the assignment name, due date, and course ID in JSON format.
+  addAssignment = (assignment) => {
+    const token = Cookies.get('XSRF-TOKEN');
+    console.log("Assignment.addAssignment")
+    fetch(`${SERVER_URL}/assignment/${assignment.courseId}/add`,
+      { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': token},
+        body: JSON.stringify(assignment)
+      })
+    .then(res => {
+        if (res.ok) {
+          toast.success("Assignment successfully added", {
+              position: toast.POSITION.BOTTOM_LEFT
+          });
+          this.fetchAssignments();
+        } else {
+          toast.error("Error when adding", {
+              position: toast.POSITION.BOTTOM_LEFT
+          });
+          console.error('Post http status =' + res.status);
+        }})
+    .catch(err => {
+      toast.error("Error when adding", {
+            position: toast.POSITION.BOTTOM_LEFT
+        });
+        console.error(err);
+    })
+  }
+    
   render() {
      const columns = [
       {
@@ -83,6 +115,9 @@ class Assignment extends React.Component {
                     variant="outlined" color="primary" disabled={this.state.assignments.length===0}  style={{margin: 10}}>
               Grade
             </Button>
+            <ButtonGroup color="primary" style={{margin: 10}}> {/* ButtonGroup containing the add assignment dialog form */}
+              <AddAssignment addAssignment={this.addAssignment}  />
+           </ButtonGroup>
             <ToastContainer autoClose={1500} /> 
           </div>
       )
